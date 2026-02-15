@@ -1,4 +1,4 @@
-cabal-version: 3.0
+cabal-version: 3.16
 name: chainweb-mining-client
 description:
     A mining client for Kadena Chainweb. It supports
@@ -13,7 +13,7 @@ description:
 
     All other mining modes (GPU, CPU, and simulation) are intended only for testing.
 
-version: 0.5
+version: 0.8.0
 synopsis: Mining Client for Kadena Chainweb
 homepage: https://github.com/kadena-io/chainweb-mining-client
 bug-reports: https://github.com/kadena-io/chainweb-mining-client/issues
@@ -25,9 +25,7 @@ copyright: Copyright (c) 2019 - 2022, Kadena LLC
 category: Data, Mathematics
 build-type: Custom
 tested-with:
-      GHC==9.2.4
-    , GHC==9.0.2
-    , GHC==8.10.7
+    GHC==9.12.2
 extra-source-files:
     README.md
     CHANGELOG.md

@@ -1,7 +1,7 @@
 {
   description = "Chainweb Mining Client";
   inputs = {
-    hs-nix-infra.url = "github:kadena-io/hs-nix-infra";
+    hs-nix-infra.url = "github:vootaa/hs-nix-infra";
     flake-utils.url = "github:numtide/flake-utils";
   };
   outputs = { self, hs-nix-infra, flake-utils,  }:
