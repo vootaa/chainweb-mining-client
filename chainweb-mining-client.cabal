@@ -1,22 +1,22 @@
-cabal-version: 3.16
+cabal-version: 3.8
 name: chainweb-mining-client
 description:
-    A mining client for Kadena Chainweb. It supports
+    A mining client for Chainweb. It supports
 
     * mining with ASICs through a stratum server,
     * simulated mining for testing,
     * multi threaded CPU mining,
     * external mining workers (e.g. a GPU).
 
-    Competitive mining on the Kadena Mainnet requires special mining hardware
+    Competitive mining on the Mainnet requires special mining hardware
     (ASIC), which connects to a Stratum Server from where it obtains work.
 
     All other mining modes (GPU, CPU, and simulation) are intended only for testing.
 
 version: 0.8.0
-synopsis: Mining Client for Kadena Chainweb
-homepage: https://github.com/kadena-io/chainweb-mining-client
-bug-reports: https://github.com/kadena-io/chainweb-mining-client/issues
+synopsis: Mining Client for Chainweb
+homepage: https://github.com/vootaa/chainweb-mining-client
+bug-reports: https://github.com/vootaa/chainweb-mining-client/issues
 license: BSD-3-Clause
 license-file: LICENSE
 author: Lars Kuhtz
@@ -32,7 +32,7 @@ extra-source-files:
 
 source-repository head
     type: git
-    location: https://github.com/kadena-io/chainweb-mining-client.git
+    location: https://github.com/vootaa/chainweb-mining-client.git
 
 custom-setup
     setup-depends:
@@ -70,7 +70,7 @@ executable chainweb-mining-client
           attoparsec >=0.14
         , base >=4.10 && <5
         , base16-bytestring >=1.0
-        , aeson >=1.5 && <2
+        , aeson >=1.5 && <3
         , async >=2.2
         , bytes >=0.17
         , bytestring >=0.10
@@ -125,7 +125,7 @@ test-suite tests
     build-depends:
         -- external
           QuickCheck >= 2.13
-        , aeson >=1.5
+        , aeson >=1.5 && <3
         , base >=4.11 && <5
         , base16-bytestring >=1.0
         , bytes >=0.17

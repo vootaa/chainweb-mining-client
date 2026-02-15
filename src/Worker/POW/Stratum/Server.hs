@@ -32,8 +32,8 @@ import Control.Monad.IO.Class
 
 import qualified Data.Aeson as A
 import qualified Data.Aeson.Types as A
-import qualified Data.Attoparsec.ByteString as P
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.HashMap.Strict as HM
 import Data.Int
@@ -298,18 +298,34 @@ messages sessionCtx app = go mempty
     n2s = sessionNonce2Size sessionCtx
 
     go :: B.ByteString -> S.Stream (S.Of MiningRequest) IO AppResult
-    go i = P.parseWith (liftIO (appRead app)) A.json' i >>= \case
-        P.Fail _ path err ->
-            return $ JsonRpcError $ "Failed to parse JSON RPC message: " <> T.pack err <> " " <> sshow path
-        P.Partial _cont ->
-            -- Can this actually happen, or would it a P.Fail?
-            return $ ConnectionClosed "Connection closed unexpectedly"
-        P.Done i' val -> case A.parse (parseMiningRequest n2s) val of
-            A.Error err ->
-                return $ StratumError $ "Unrecognized message: " <> T.pack err <> ". " <> sshow val
-            A.Success result -> do
-                S.yield result
-                go i'
+    go buffered = do
+        chunk <- liftIO (appRead app)
+        if B.null chunk
+            then if B.null buffered
+                then return $ ConnectionClosed "Connection closed unexpectedly"
+                else parseAndYieldLine mempty buffered
+            else parseAndYieldLines (buffered <> chunk)
+
+    parseAndYieldLines :: B.ByteString -> S.Stream (S.Of MiningRequest) IO AppResult
+    parseAndYieldLines input =
+        let (line, rest) = BC.break (== '\n') input
+        in if B.null rest
+            then go input
+            else do
+                parseAndYieldLine (BC.drop 1 rest) line
+
+    parseAndYieldLine :: B.ByteString -> B.ByteString -> S.Stream (S.Of MiningRequest) IO AppResult
+    parseAndYieldLine next rawLine =
+        let line = BC.dropWhileEnd (== '\r') rawLine
+        in if B.null line
+            then parseAndYieldLines next
+            else case A.eitherDecodeStrict' line of
+                Left err -> return $ JsonRpcError $ "Failed to parse JSON RPC message: " <> T.pack err
+                Right val -> case A.parse (parseMiningRequest n2s) val of
+                    A.Error err -> return $ StratumError $ "Unrecognized message: " <> T.pack err <> ". " <> sshow val
+                    A.Success result -> do
+                        S.yield result
+                        parseAndYieldLines next
 
 -- -------------------------------------------------------------------------- --
 -- Stratum Server Config
