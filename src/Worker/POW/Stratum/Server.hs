@@ -507,10 +507,10 @@ session l ctx app = withLogTag l "Stratum Session" $ \l2 -> withLogTag l2 (sshow
         case r of
             Right _ -> writeLog logger L.Error "Stratum session ended unexpectedly because an internal chainweb-mining-client issue"
             Left e@(JsonRpcError msg) -> do
-                replyError app $ Error (-32700, "Parse Error", A.String msg)
+                replyError app $ Error (-32_700, "Parse Error", A.String msg)
                 writeLog logger L.Warn $ "session termianted with " <> sshow e
             Left e@(StratumError msg) -> do
-                replyError app $ Error (-32600, "Invalid Request", A.String msg)
+                replyError app $ Error (-32_600, "Invalid Request", A.String msg)
                     -- FIXME be more specific (cf. json rpc internal error codes)
                 writeLog logger L.Warn $ "session termianted with " <> sshow e
             Left e@(TimeoutError msg) -> do

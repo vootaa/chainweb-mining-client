@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
@@ -45,7 +44,7 @@ tests = describe "Utils" $ do
     prop "prop_le64_peek" prop_le64_peek
 
 word8LeToWord64 :: [Word8] -> Word64
-word8LeToWord64 w8s = foldr (\a c -> (int @Word8 a) + c * 256) 0 w8s
+word8LeToWord64 = foldr (\a c -> int @Word8 a + c * 256) 0
 
 -- -------------------------------------------------------------------------- --
 -- Properties

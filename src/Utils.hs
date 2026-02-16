@@ -1,5 +1,4 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
@@ -7,9 +6,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MagicHash #-}
-{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -374,9 +371,10 @@ instance ToJSON Port where
   toJSON = toJSON . int @_ @Int
 
 instance FromJSON Port where
-  parseJSON = parseJSON @Int >=> \x -> if
-    | 0 <= x && x <= int (maxBound @Word16) -> return $ int x
-    | otherwise -> fail $ "invalid port number: " <> sshow x
+    parseJSON = parseJSON @Int >=> \x ->
+        if 0 <= x && x <= int (maxBound @Word16)
+            then return $ int x
+            else fail $ "invalid port number: " <> sshow x
 
 -- -------------------------------------------------------------------------- --
 --  Host Preference

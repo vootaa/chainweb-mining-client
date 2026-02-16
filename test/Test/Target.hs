@@ -1,8 +1,6 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE ViewPatterns #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -111,7 +109,7 @@ prop_targetWords :: Target -> Property
 prop_targetWords t = targetFromWords (targetToWords t) === t
 
 prop_fromString :: Target -> Property
-prop_fromString t = (fromString $ T.unpack $ targetToText16Be t) === t
+prop_fromString t = fromString (T.unpack $ targetToText16Be t) === t
 
 -- -------------------------------------------------------------------------- --
 -- Level Stuff

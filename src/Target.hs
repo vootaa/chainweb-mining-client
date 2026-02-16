@@ -1,14 +1,8 @@
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MagicHash #-}
-{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UnboxedTuples #-}
@@ -344,9 +338,10 @@ instance A.ToJSON Level where
     {-# INLINE toJSON #-}
 
 instance A.FromJSON Level where
-    parseJSON = A.parseJSON >=> \i -> if
-        | i < 0 || i > 256 -> fail $ "Invalid difficulty level. Expected an integral value between 0 and 256; got " <> show i
-        | otherwise -> return $ Level i
+    parseJSON = A.parseJSON >=> \i ->
+        if i < 0 || i > 256
+            then fail $ "Invalid difficulty level. Expected an integral value between 0 and 256; got " <> show i
+            else return $ Level i
     {-# INLINE parseJSON #-}
 
 mkTargetLevel :: Level -> Target
