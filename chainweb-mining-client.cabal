@@ -155,15 +155,19 @@ test-suite pow-tests
         -with-rtsopts=-N
     main-is: PowMain.hs
     other-modules:
+        Logger
         Utils
         Worker
+        Worker.POW.CPU
         WorkerUtils
         Target
         Test.PowHash
+        Test.PowIntegration
     build-depends:
         -- external
           QuickCheck >= 2.13
         , aeson >=1.5 && <3
+                , async >=2.2
         , base >=4.11 && <5
         , base16-bytestring >=1.0
         , bytes >=0.17
@@ -177,6 +181,7 @@ test-suite pow-tests
         , optparse-applicative < 0.19
         , memory >=0.15
         , quickcheck-instances >=0.3
+        , loglevel >=0.1
         , stm >=2.5
         , streaming-commons >=0.2.2
         , sydtest >=0.4
