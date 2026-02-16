@@ -44,6 +44,7 @@ import Data.Int
 import qualified Data.Memory.Endian as BA
 import Data.Time.Clock.System
 import Data.Word
+import Numeric (showHex)
 
 import Foreign.Ptr (castPtr)
 import Foreign.Storable (peekElemOff, pokeByteOff, peekByteOff)
@@ -189,6 +190,17 @@ versionNameByCode 0x00000007 = "testnet04"
 versionNameByCode 0x00000010 = "mono"
 versionNameByCode 0x00000011 = "triad"
 versionNameByCode 0x00000012 = "icosa"
-versionNameByCode c = error $ "Unsupported ChainwebVersionCode in work header: " <> show c
+versionNameByCode c = error
+        $ "Unsupported ChainwebVersionCode in work header: "
+        <> formatVersionCodeHex c
+        <> " (decimal "
+        <> show c
+        <> ")"
 {-# INLINE versionNameByCode #-}
+
+formatVersionCodeHex :: Word32 -> String
+formatVersionCodeHex c = "0x" <> replicate (8 - length h) '0' <> h
+    where
+        h = showHex c ""
+{-# INLINE formatVersionCodeHex #-}
 

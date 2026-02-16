@@ -65,6 +65,20 @@ tests = do
                 Left e -> show e `shouldSatisfy` isInfixOf "Unsupported ChainwebVersionCode"
                 Right _ -> expectationFailure "expected powDomainPrefix to throw"
 
+        it "reports unsupported version code in fixed-width hex format" $ do
+            let w = mkWorkWithVersionCode 0x000000ff
+            r <- (try (evaluate (powDomainPrefix w)) :: IO (Either ErrorCall B.ByteString))
+            case r of
+                Left e -> show e `shouldSatisfy` isInfixOf "0x000000ff"
+                Right _ -> expectationFailure "expected powDomainPrefix to throw"
+
+        it "reports unsupported version code with decimal field" $ do
+            let w = mkWorkWithVersionCode 0x000000ff
+            r <- (try (evaluate (powDomainPrefix w)) :: IO (Either ErrorCall B.ByteString))
+            case r of
+                Left e -> show e `shouldSatisfy` isInfixOf "decimal 255"
+                Right _ -> expectationFailure "expected powDomainPrefix to throw"
+
         it "throws when version code and expected network name mismatch" $ do
             let w = mkWorkWithVersionCode 0x00000010
             r <- try (validateExpectedPrefix w "Vootaa-POW-PS1|triad") :: IO (Either ErrorCall ())
