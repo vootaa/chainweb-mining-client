@@ -29,6 +29,10 @@ tests = do
             let w = mkWorkWithVersionCode 0x00000011
             powDomainPrefix w `shouldBe` "Vootaa-POW-PS1|triad"
 
+        it "uses icosa prefix for version code 0x12" $ do
+            let w = mkWorkWithVersionCode 0x00000012
+            powDomainPrefix w `shouldBe` "Vootaa-POW-PS1|icosa"
+
     describe "powHash" $ do
         it "matches Blake2b_256(prefix <> workBytes)" $ do
             let w@(Work bytes) = mkWorkWithVersionCode 0x00000010
