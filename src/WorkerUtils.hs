@@ -28,6 +28,7 @@ module WorkerUtils
 -- * Check Target
 , checkTarget
 , fastCheckTarget
+, powDomainPrefix
 , powHash
 , powHashToTargetWords
 ) where
@@ -35,7 +36,9 @@ module WorkerUtils
 import Crypto.Hash
 
 import qualified Data.ByteArray as BA
+import Data.Bits
 import Data.Bytes.Signed
+import qualified Data.ByteString as B
 import qualified Data.ByteString.Short as BS
 import Data.Int
 import qualified Data.Memory.Endian as BA
@@ -151,7 +154,7 @@ checkTarget t w = do
     return $ targetFromWords t' <= t
 {-# INLINE checkTarget #-}
 
-powHashToTargetWords :: Digest Blake2s_256 -> IO TargetWords
+powHashToTargetWords :: Digest Blake2b_256 -> IO TargetWords
 powHashToTargetWords h = BA.withByteArray h $ \ptr -> TargetWords
     <$> peekWord64OffLe ptr 0
     <*> peekWord64OffLe ptr 8
@@ -159,7 +162,33 @@ powHashToTargetWords h = BA.withByteArray h $ \ptr -> TargetWords
     <*> peekWord64OffLe ptr 24
 {-# INLINE powHashToTargetWords #-}
 
-powHash :: Work -> Digest Blake2s_256
-powHash (Work bytes) = hash (BS.fromShort bytes)
+powHash :: Work -> Digest Blake2b_256
+powHash w@(Work bytes) = hash (powDomainPrefix w <> BS.fromShort bytes)
 {-# INLINE powHash #-}
+
+powDomainPrefix :: Work -> B.ByteString
+powDomainPrefix (Work bytes) = unsafeDupablePerformIO $ BS.useAsCStringLen bytes $ \(ptr,_) -> do
+    versionCode <- workVersionCode (castPtr ptr)
+    return $ "Vootaa-POW-PS1|" <> versionNameByCode versionCode
+{-# INLINE powDomainPrefix #-}
+
+workVersionCode :: Ptr Word8 -> IO Word32
+workVersionCode ptr = do
+    b0 <- fromIntegral <$> (peekByteOff ptr 266 :: IO Word8)
+    b1 <- fromIntegral <$> (peekByteOff ptr 267 :: IO Word8)
+    b2 <- fromIntegral <$> (peekByteOff ptr 268 :: IO Word8)
+    b3 <- fromIntegral <$> (peekByteOff ptr 269 :: IO Word8)
+    return $ b0 .|. shiftL b1 8 .|. shiftL b2 16 .|. shiftL b3 24
+{-# INLINE workVersionCode #-}
+
+versionNameByCode :: Word32 -> B.ByteString
+versionNameByCode 0x00000001 = "recap-development"
+versionNameByCode 0x00000002 = "development"
+versionNameByCode 0x00000005 = "mainnet01"
+versionNameByCode 0x00000007 = "testnet04"
+versionNameByCode 0x00000010 = "mono"
+versionNameByCode 0x00000011 = "triad"
+versionNameByCode 0x00000012 = "icosa"
+versionNameByCode c = error $ "Unsupported ChainwebVersionCode in work header: " <> show c
+{-# INLINE versionNameByCode #-}
 

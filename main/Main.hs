@@ -39,7 +39,7 @@ import Control.Monad.Catch
 import Control.Monad.IO.Class
 import Control.Retry
 
-import Crypto.Hash.Algorithms (Blake2s_256)
+import Crypto.Hash.Algorithms (Blake2b_256)
 import qualified Crypto.PubKey.Ed25519 as C
 
 import qualified Data.ByteArray.Encoding as BA
@@ -288,7 +288,7 @@ defaultConfig = Config
     , _configOnDemandPort = 1917
     , _configOnDemandInterface = "*"
     , _configConstantDelayBlockTime = 30
-    , _configDefaultHTTPTimeout = 1000000
+    , _configDefaultHTTPTimeout = 1_000_000
     }
 
 instance ToJSON Config where
@@ -421,7 +421,7 @@ parseConfig = id
 retryHttp :: Logger -> IO a -> IO a
 retryHttp logger = recovering policy (httpRetryHandler logger) . const
   where
-    policy = capDelay 5000000 $ fullJitterBackoff 100
+    policy = capDelay 5_000_000 $ fullJitterBackoff 100
 
 httpRetryHandler :: Logger -> [RetryStatus -> Handler IO Bool]
 httpRetryHandler logger = skipAsyncExceptions <>
@@ -478,9 +478,10 @@ instance Exception GetWorkFailure
 -- | Make an HTTP request with an JSON response
 --
 getJson :: FromJSON a => HTTP.Manager -> HTTP.Request -> IO a
-getJson mgr req = (eitherDecode . HTTP.responseBody <$> HTTP.httpLbs req mgr) >>= \case
-    Left e -> error $ "Failed to decode json response: " <> show e
-    Right r -> return r
+getJson mgr req = HTTP.httpLbs req mgr >>= \resp ->
+    case eitherDecode (HTTP.responseBody resp) of
+        Left e -> error $ "Failed to decode json response: " <> show e
+        Right r -> return r
 
 -- | Base request type for chainweb queries
 --
@@ -844,7 +845,7 @@ run conf logger = do
         OnDemandWorker -> do
             withOnDemandWorker logger (_configOnDemandPort conf) (_configOnDemandInterface conf) f
         ExternalWorker -> f $ \l -> externalWorker l (_configExternalWorkerCommand conf)
-        CpuWorker -> f $ cpuWorker @Blake2s_256
+        CpuWorker -> f $ cpuWorker @Blake2b_256
         StratumWorker -> Stratum.withStratumServer
           logger
           (_configStratumPort conf)

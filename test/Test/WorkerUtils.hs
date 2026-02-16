@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -89,9 +88,10 @@ testWorks = Work . BS.toShort . B.take 286 . BS.fromShort . _headerBytes <$> tes
 -- Test cases
 
 test_checkTarget_testHeaders :: Spec
-test_checkTarget_testHeaders = describe "WorkerUtils.checkTarget succeeds for test headers"
+test_checkTarget_testHeaders = describe "WorkerUtils.checkTarget is consistent with WorkerUtils.powHash for test headers"
     $ mapM_ (uncurry checkWork) (zip [0..] testWorks)
   where
-    checkWork i w = it (show i) $
-        checkTarget (extractTarget w) w `shouldReturn` True
+        checkWork i w = it (show i) $ do
+                wordsForHash <- powHashToTargetWords (powHash w)
+                checkTarget (targetFromWords wordsForHash) w `shouldReturn` True
 

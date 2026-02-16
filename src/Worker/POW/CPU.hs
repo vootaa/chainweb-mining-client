@@ -1,7 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
@@ -99,6 +98,7 @@ cpuWorker logger orig@(Nonce o) trg _cid work = do
   where
     !trgWords = targetToWords trg
     !hbytes = let (Work b) = work in BS.fromShort b
+    !powDomainPrefixBytes = powDomainPrefix work
 
     bufSize :: Int
     !bufSize = B.length hbytes
@@ -111,6 +111,8 @@ cpuWorker logger orig@(Nonce o) trg _cid work = do
     hash ctx buf pow = do
         hashMutableReset ctx
         BA.withByteArray ctx $ \ctxPtr -> do
+            B.useAsCStringLen powDomainPrefixBytes $ \(prefixBuf, prefixLen) ->
+                hashInternalUpdate @a ctxPtr (castPtr prefixBuf) (fromIntegral prefixLen)
             hashInternalUpdate @a ctxPtr buf $ fromIntegral bufSize
             hashInternalFinalize ctxPtr $ castPtr pow
     {-# INLINE hash #-}
