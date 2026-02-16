@@ -5,6 +5,9 @@ module Test.PowIntegration
 ( tests
 ) where
 
+import Control.Concurrent.Async (mapConcurrently)
+import Control.Monad (forM_, replicateM)
+
 import Crypto.Hash.Algorithms (Blake2b_256)
 
 import Data.Bits
@@ -81,6 +84,33 @@ tests = do
                 solved `shouldNotBe` startWork
                 wordsForHash <- powHashToTargetWords (powHash solved)
                 checkTarget (targetFromWords wordsForHash) solved `shouldReturn` True
+
+    describe "cpu worker concurrency and stability" $ do
+        it "handles concurrent workers with isolated nonce writes" $
+            withTestLogger $ \logger -> do
+                let versionCode = 0x00000011
+                    job n = do
+                        let startNonce = Nonce n
+                            startWork = mkWorkWithVersionCode versionCode
+                        solved <- cpuWorker @Blake2b_256 logger startNonce maxTarget (ChainId 0) startWork
+                        return (startNonce, solved)
+                results <- mapConcurrently job [1 .. 32]
+                forM_ results $ \(startNonce, solved) -> do
+                    nonceFromWork solved `shouldBe` startNonce
+                    versionCodeFromWork solved `shouldBe` versionCode
+                    checkTarget maxTarget solved `shouldReturn` True
+
+        it "is stable across repeated runs for the same input" $
+            withTestLogger $ \logger -> do
+                let startNonce = Nonce 424242
+                    versionCode = 0x00000012
+                    startWork = mkWorkWithVersionCode versionCode
+                solvedBatch <- replicateM 20 $ cpuWorker @Blake2b_256 logger startNonce maxTarget (ChainId 0) startWork
+                forM_ solvedBatch $ \solved -> do
+                    nonceFromWork solved `shouldBe` startNonce
+                    versionCodeFromWork solved `shouldBe` versionCode
+                    powDomainPrefix solved `shouldBe` powDomainPrefix startWork
+                    checkTarget maxTarget solved `shouldReturn` True
 
 checkExactTarget :: Word32 -> IO ()
 checkExactTarget versionCode = do

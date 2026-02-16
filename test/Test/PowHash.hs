@@ -65,6 +65,16 @@ tests = do
                 Left e -> show e `shouldSatisfy` isInfixOf "Unsupported ChainwebVersionCode"
                 Right _ -> expectationFailure "expected powDomainPrefix to throw"
 
+        it "throws when version code and expected network name mismatch" $ do
+            let w = mkWorkWithVersionCode 0x00000010
+            r <- try (validateExpectedPrefix w "Vootaa-POW-PS1|triad") :: IO (Either ErrorCall ())
+            r `shouldSatisfy` isLeft
+
+        it "throws when prefix spelling is wrong" $ do
+            let w = mkWorkWithVersionCode 0x00000010
+            r <- try (validateExpectedPrefix w "Vootaa-POW-PSI|mono") :: IO (Either ErrorCall ())
+            r `shouldSatisfy` isLeft
+
     describe "powHash" $ do
         it "matches Blake2b_256(prefix <> workBytes)" $ do
             let w@(Work bytes) = mkWorkWithVersionCode 0x00000010
@@ -80,6 +90,13 @@ tests = do
         it "is deterministic for identical work" $ do
             let w = mkWorkWithVersionCode 0x00000012
             powHash w `shouldBe` powHash w
+
+        it "changes when prefix spelling is altered" $ do
+            let w@(Work bytes) = mkWorkWithVersionCode 0x00000010
+                typoPrefix = "Vootaa-POW-PSI|mono"
+                typoHash :: Digest Blake2b_256
+                typoHash = hash (typoPrefix <> BS.fromShort bytes)
+            powHash w `shouldNotBe` typoHash
 
     describe "checkTarget" $ do
         it "accepts target derived from the same pow hash" $ do
@@ -106,3 +123,11 @@ setWord32LeAt offset value bytes =
         , fromIntegral (value `shiftR` 16)
         , fromIntegral (value `shiftR` 24)
         ]
+
+validateExpectedPrefix :: Work -> B.ByteString -> IO ()
+validateExpectedPrefix w expected =
+    if actual == expected
+        then return ()
+        else error $ "PoW domain prefix mismatch: expected " <> show expected <> ", got " <> show actual
+  where
+    actual = powDomainPrefix w
