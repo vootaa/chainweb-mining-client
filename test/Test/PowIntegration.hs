@@ -6,6 +6,7 @@ module Test.PowIntegration
 ) where
 
 import Control.Concurrent.Async (mapConcurrently)
+import Control.Exception (ErrorCall, try)
 import Control.Monad (forM_, replicateM)
 
 import Crypto.Hash.Algorithms (Blake2b_256)
@@ -15,6 +16,7 @@ import Data.Bytes.Get
 import Data.Bytes.Put
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Short as BS
+import Data.List (isInfixOf)
 import Data.Word
 
 import System.LogLevel (LogLevel(..))
@@ -129,6 +131,38 @@ tests = do
                     versionCodeFromWork solved `shouldBe` versionCode
                     powDomainPrefix solved `shouldBe` powDomainPrefix startWork
                     checkTarget maxTarget solved `shouldReturn` True
+
+        it "isolates failures with mixed valid/invalid version codes under concurrency" $
+            withTestLogger $ \logger -> do
+                let validPool = [0x00000010, 0x00000011, 0x00000012]
+                    chooseVersion i
+                        | i `mod` 8 == 0 = 0x000000ff
+                        | otherwise = validPool !! (fromIntegral i `mod` length validPool)
+                    isValidVersion v = v `elem` validPool
+                    job i = do
+                        let startNonce = Nonce (200000 + i)
+                            versionCode = chooseVersion i
+                            chain = ChainId (fromIntegral (i `mod` 20))
+                            startWork = mkWorkWithVersionCode versionCode
+                        result <- try (cpuWorker @Blake2b_256 logger startNonce maxTarget chain startWork) :: IO (Either ErrorCall Work)
+                        return (startNonce, versionCode, startWork, result)
+                results <- mapConcurrently job [0 .. 127]
+                let expectedFailures = length [i | i <- [0 .. 127], i `mod` 8 == 0]
+                    actualFailures = length [() | (_, _, _, Left _) <- results]
+                actualFailures `shouldBe` expectedFailures
+                forM_ results $ \(startNonce, versionCode, startWork, result) ->
+                    case (isValidVersion versionCode, result) of
+                        (True, Right solved) -> do
+                            nonceFromWork solved `shouldBe` startNonce
+                            versionCodeFromWork solved `shouldBe` versionCode
+                            powDomainPrefix solved `shouldBe` powDomainPrefix startWork
+                            checkTarget maxTarget solved `shouldReturn` True
+                        (False, Left e) ->
+                            show e `shouldSatisfy` isInfixOf "Unsupported ChainwebVersionCode"
+                        (True, Left e) ->
+                            expectationFailure $ "valid version unexpectedly failed: " <> show e
+                        (False, Right _) ->
+                            expectationFailure "invalid version unexpectedly succeeded"
 
 checkExactTarget :: Word32 -> IO ()
 checkExactTarget versionCode = do
