@@ -112,6 +112,24 @@ tests = do
                     powDomainPrefix solved `shouldBe` powDomainPrefix startWork
                     checkTarget maxTarget solved `shouldReturn` True
 
+        it "handles boundary concurrency (128 workers) with mixed versions" $
+            withTestLogger $ \logger -> do
+                let versionPool = [0x00000010, 0x00000011, 0x00000012]
+                    chooseVersion i = versionPool !! (fromIntegral i `mod` length versionPool)
+                    job i = do
+                        let startNonce = Nonce (100000 + i)
+                            versionCode = chooseVersion i
+                            chain = ChainId (fromIntegral (i `mod` 20))
+                            startWork = mkWorkWithVersionCode versionCode
+                        solved <- cpuWorker @Blake2b_256 logger startNonce maxTarget chain startWork
+                        return (startNonce, versionCode, startWork, solved)
+                results <- mapConcurrently job [0 .. 127]
+                forM_ results $ \(startNonce, versionCode, startWork, solved) -> do
+                    nonceFromWork solved `shouldBe` startNonce
+                    versionCodeFromWork solved `shouldBe` versionCode
+                    powDomainPrefix solved `shouldBe` powDomainPrefix startWork
+                    checkTarget maxTarget solved `shouldReturn` True
+
 checkExactTarget :: Word32 -> IO ()
 checkExactTarget versionCode = do
     let w = mkWorkWithVersionCode versionCode
