@@ -164,6 +164,79 @@ tests = do
                         (False, Right _) ->
                             expectationFailure "invalid version unexpectedly succeeded"
 
+        it "isolates invalid-version and prefix-typo errors in the same concurrent batch" $
+            withTestLogger $ \logger -> do
+                let validPool = [0x00000010, 0x00000011, 0x00000012]
+                    chooseVersion i = validPool !! (fromIntegral i `mod` length validPool)
+                    classify i
+                        | i `mod` 10 == 0 = "invalid-version"
+                        | i `mod` 10 == 1 = "prefix-typo"
+                        | otherwise = "success"
+                    job i = do
+                        let kind = classify i
+                            startNonce = Nonce (300000 + i)
+                            versionCode = case kind of
+                                "invalid-version" -> 0x000000ff
+                                "prefix-typo" -> 0x00000010
+                                _ -> chooseVersion i
+                            chain = ChainId (fromIntegral (i `mod` 20))
+                            startWork = mkWorkWithVersionCode versionCode
+                        result <- case kind of
+                            "prefix-typo" ->
+                                (try $ do
+                                    solved <- cpuWorker @Blake2b_256 logger startNonce maxTarget chain startWork
+                                    validateExpectedPrefix solved "Vootaa-POW-PSI|mono"
+                                    return solved) :: IO (Either ErrorCall Work)
+                            _ ->
+                                (try (cpuWorker @Blake2b_256 logger startNonce maxTarget chain startWork) :: IO (Either ErrorCall Work))
+                        return (kind, startNonce, versionCode, startWork, result)
+
+                results <- mapConcurrently job [0 .. 127]
+                let expectedInvalid = length [i | i <- [0 .. 127], i `mod` 10 == 0]
+                    expectedTypo = length [i | i <- [0 .. 127], i `mod` 10 == 1]
+                    expectedSuccess = 128 - expectedInvalid - expectedTypo
+                    countInvalid = length
+                        [ ()
+                        | (kind, _, _, _, Left e) <- results
+                        , kind == "invalid-version"
+                        , "Unsupported ChainwebVersionCode" `isInfixOf` show e
+                        ]
+                    countTypo = length
+                        [ ()
+                        | (kind, _, _, _, Left e) <- results
+                        , kind == "prefix-typo"
+                        , "PoW domain prefix mismatch" `isInfixOf` show e
+                        ]
+                    countSuccess = length
+                        [ ()
+                        | (kind, _, _, _, Right _) <- results
+                        , kind == "success"
+                        ]
+
+                countInvalid `shouldBe` expectedInvalid
+                countTypo `shouldBe` expectedTypo
+                countSuccess `shouldBe` expectedSuccess
+
+                forM_ results $ \(kind, startNonce, versionCode, startWork, result) ->
+                    case (kind, result) of
+                        ("success", Right solved) -> do
+                            nonceFromWork solved `shouldBe` startNonce
+                            versionCodeFromWork solved `shouldBe` versionCode
+                            powDomainPrefix solved `shouldBe` powDomainPrefix startWork
+                            checkTarget maxTarget solved `shouldReturn` True
+                        ("invalid-version", Left e) ->
+                            show e `shouldSatisfy` isInfixOf "Unsupported ChainwebVersionCode"
+                        ("prefix-typo", Left e) ->
+                            show e `shouldSatisfy` isInfixOf "PoW domain prefix mismatch"
+                        ("success", Left e) ->
+                            expectationFailure $ "success job unexpectedly failed: " <> show e
+                        ("invalid-version", Right _) ->
+                            expectationFailure "invalid-version job unexpectedly succeeded"
+                        ("prefix-typo", Right _) ->
+                            expectationFailure "prefix-typo job unexpectedly succeeded"
+                        (_, _) ->
+                            expectationFailure "unexpected job classification"
+
 checkExactTarget :: Word32 -> IO ()
 checkExactTarget versionCode = do
     let w = mkWorkWithVersionCode versionCode
@@ -216,3 +289,11 @@ word64LeAt off bs =
         .|. shiftL (fromIntegral (B.index bs (off + 5))) 40
         .|. shiftL (fromIntegral (B.index bs (off + 6))) 48
         .|. shiftL (fromIntegral (B.index bs (off + 7))) 56
+
+validateExpectedPrefix :: Work -> B.ByteString -> IO ()
+validateExpectedPrefix w expected =
+    if actual == expected
+        then return ()
+        else error $ "PoW domain prefix mismatch: expected " <> show expected <> ", got " <> show actual
+  where
+    actual = powDomainPrefix w
