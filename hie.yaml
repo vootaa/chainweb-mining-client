@@ -1,0 +1,14 @@
+cradle:
+  cabal:
+    - path: ./src
+      component: exe:chainweb-mining-client
+    - path: ./main
+      component: exe:chainweb-mining-client
+    - path: ./test/Test/PowHash.hs
+      component: test:pow-tests
+    - path: ./test/Test/PowIntegration.hs
+      component: test:pow-tests
+    - path: ./test/PowMain.hs
+      component: test:pow-tests
+    - path: ./test
+      component: test:tests
