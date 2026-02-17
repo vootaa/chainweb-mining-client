@@ -185,11 +185,13 @@ workVersionCode ptr = do
 versionNameByCode :: Word32 -> B.ByteString
 versionNameByCode 0x00000001 = "recap-development"
 versionNameByCode 0x00000002 = "development"
-versionNameByCode 0x00000005 = "mainnet01"
-versionNameByCode 0x00000007 = "testnet04"
+versionNameByCode 0x00000005 = "legacy-v5"
 versionNameByCode 0x00000010 = "mono"
 versionNameByCode 0x00000011 = "triad"
 versionNameByCode 0x00000012 = "icosa"
+versionNameByCode 0x00000020 = error "Unsupported ChainwebVersionCode for mining client: 0x00000020 (mono-dev, dev network disables PoW)"
+versionNameByCode 0x00000021 = error "Unsupported ChainwebVersionCode for mining client: 0x00000021 (triad-dev, dev network disables PoW)"
+versionNameByCode 0x00000022 = error "Unsupported ChainwebVersionCode for mining client: 0x00000022 (icosa-dev, dev network disables PoW)"
 versionNameByCode c = error
         $ "Unsupported ChainwebVersionCode in work header: "
         <> formatVersionCodeHex c

@@ -73,7 +73,7 @@ import Worker.POW.Stratum.Protocol
 -- nonce1Size :: NonceSize
 -- nonce1Size = 2
 
-data PoolCtx = PoolCtx
+newtype PoolCtx = PoolCtx
     { _workerAuthorization :: Authorize
     }
 

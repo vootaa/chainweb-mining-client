@@ -33,14 +33,6 @@ tests = do
             let w = mkWorkWithVersionCode 0x00000002
             powDomainPrefix w `shouldBe` "Vootaa-POW-PS1|development"
 
-        it "uses mainnet01 prefix for version code 0x05" $ do
-            let w = mkWorkWithVersionCode 0x00000005
-            powDomainPrefix w `shouldBe` "Vootaa-POW-PS1|mainnet01"
-
-        it "uses testnet04 prefix for version code 0x07" $ do
-            let w = mkWorkWithVersionCode 0x00000007
-            powDomainPrefix w `shouldBe` "Vootaa-POW-PS1|testnet04"
-
         it "uses mono prefix for version code 0x10" $ do
             let w = mkWorkWithVersionCode 0x00000010
             powDomainPrefix w `shouldBe` "Vootaa-POW-PS1|mono"
