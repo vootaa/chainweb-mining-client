@@ -1,5 +1,17 @@
 # Revision history for chainweb-mining-client
 
+## 0.8.0 -- 2026-02-17
+
+This release captures the cumulative `cw-version` branch work for the Vootaa fork line.
+
+* Align miner PoW hashing to node-side fork rules: `Blake2b_256(powPrefix(version) <> workBytes)`.
+* Enforce domain-isolated prefix construction in `powDomainPrefix` and keep CPU-worker behavior consistent with Stratum/submit paths.
+* Harden unsupported-version diagnostics in `powDomainPrefix` to include fixed-width hex and decimal fields for stable error semantics.
+* Add compatibility handling for version-code paths used by historical fixtures/headers, including legacy compatibility codes and current dev-target codes.
+* Expand PoW-focused test matrix with positive/negative prefix validation, encode/decode roundtrips, target acceptance/rejection, CPU worker flow, and high-concurrency isolation scenarios.
+* Keep runtime/toolchain updates synchronized with the forked target model and refresh README references for current mining workflows.
+* This section reflects PR-06/PR-07 and PR-13 audit details in `Docs/20260214-Vootaa-Minimal-Approved-for-Coding/records/`.
+
 ## 0.5 -- 2022-11-23
 
 *   Add `--stratum-rate` option, which specifies the mining rate (in

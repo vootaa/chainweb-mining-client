@@ -1,6 +1,6 @@
-# Mining Client for Kadena
+# Chainweb Mining Client
 
-A mining client for Kadena's chainweb node mining API. It supports
+A mining client for the Chainweb node mining API. It supports
 
 * mining with ASICs through a stratum server,
 * simulated mining for testing,
@@ -8,37 +8,27 @@ A mining client for Kadena's chainweb node mining API. It supports
 * external mining workers (e.g. a GPU),
 * timed miners for non-PoW usecases.
 
-*Competitive mining on the Kadena Mainnet requires special mining hardware
+*Competitive mining on production PoW profiles requires special mining hardware
 (ASIC), which connects to a Stratum Server from where it obtains work.*
 
 *All other mining modes (GPU, CPU, and simulation) are intended only for testing.*
 
-*   [Installation](#installation)
-*   [Usage](#usage)
-*   [Usage Examples](#usage-examples)
-    *  [Generating a New Key Pair](#generating-a-new-key-pair)
-    *  [Mining on Mainnet With an ASIC](#mining-on-mainnet-with-an-asic)
-    *  [CPU Mining](#cpu-mining)
-    *  [GPU Mining](#gpu-mining)
-    *  [Creating a Configuration File](#creating-a-configuration-file)
-*   [Related Resources](#related-resources)
+    *   [Installation](#installation)
+    *   [Usage](#usage)
+    *   [Usage Examples](#usage-examples)
+        *  [Generating a New Key Pair](#generating-a-new-key-pair)
+        *  [Mining on Mainnet With an ASIC](#mining-on-mainnet-with-an-asic)
+        *  [CPU Mining](#cpu-mining)
+        *  [GPU Mining](#gpu-mining)
+        *  [Creating a Configuration File](#creating-a-configuration-file)
+    *   [Related Resources](#related-resources)
 
 ## Installation
 
-A docker image of the latest version is available at
-`ghcr.io/kadena-io/chainweb-mining-client:latest`.
-
-Binaries can also be compiled with a recent version of GHC and cabal directly
-from [Hackage](https://hackage.haskell.org/package/chainweb-mining-client)
+From the GitHub sources
 
 ```sh
-cabal install chainweb-mining-client
-```
-
-or from the GitHub sources
-
-```sh
-git clone https://github.com/kadena-io/chainweb-mining-client/
+git clone https://github.com/vootaa/chainweb-mining-client/
 cd chainweb-mining-client
 cabal build
 cabal run chainweb-mining-client -- --help
@@ -68,7 +58,7 @@ Usage: chainweb-mining-client [--info] [--long-info] [-v|--version] [--license]
                               [--constant-delay-block-time ARG]
                               [--on-demand-interface ARG] [--on-demand-port ARG]
 
-  Kadena Chainweb Mining Client
+    Chainweb Mining Client
 
 Available options:
   --info                   Print program info message and exit
@@ -155,8 +145,8 @@ private: 64ef6379db5ef6004aff98182688c6e8b4a5229e706f1ccf6a73b05b1432aedf
 ### Mining on Mainnet With an ASIC
 
 chainweb-mining-client needs access to the mining API of a full [Chainweb
-node](https://github.com/kadena-io/chainweb-node) in
-the Kadena Mainnet. The node must be configured to enable the mining API with
+node](https://github.com/vootaa/chainweb-node) in
+a production chain profile. The node must be configured to enable the mining API with
 the Pact *public* key (and, optionally, account name) of the miner. Rewards for
 mined blocks will be credited to that account. The default is to use the `k:`
 account for the key.
@@ -165,12 +155,11 @@ The `--enable-mining-coordination`, `--mining-public-key` can be used to
 configure chainweb-node for mining. The mining API is served on the service API
 port (default is 1848).
 
-
 Assuming that `example.com` serves the chainweb-node mining API on port 1848,
 the following command can be used to run chainweb-mining-client with the stratum
 server on port 1917:
 
-```
+```text
 chainweb-mining-client \
     --public-key 87ef8fdb229ad10285ae191a168ea2ec0794621a127df21e372f41fd0246e4cf \
     --node example.com:1848 \
@@ -251,7 +240,7 @@ chainweb-mining-client \
 ### GPU Mining
 
 GPU mining is supported via calling an external worker that does the mining
-work. An example for such a GPU mining tool for Kadena is
+work. An example for such a GPU mining tool is
 [bigolchunugus](https://github.com/kadena-community/bigolchungus).
 
 ```sh
@@ -353,8 +342,8 @@ chainweb-mining-client --config-file config.yml
 
 ## Related Resources
 
-*   [Chainweb Node Project Page](https://github.com/kadena-io/chainweb-node)
-*   [Kadena Stratum Protocol](https://gist.github.com/mightybyte/f1567c2bec0380539c638225fb8c1cf4)
+*   [Chainweb Node Project Page](https://github.com/vootaa/chainweb-node)
+*   [Stratum Protocol Reference](https://gist.github.com/mightybyte/f1567c2bec0380539c638225fb8c1cf4)
 *   [mining API of chainweb-node](https://api.chainweb.com/openapi/#tag/mining)
-*   [work header format](https://github.com/kadena-io/chainweb-node/wiki/Block-Header-Binary-Encoding#work-header-binary-format).
-*   [mining API wiki](https://github.com/kadena-io/chainweb-node/wiki/Mining-API).
+*   [work header format](https://github.com/vootaa/chainweb-node/wiki/Block-Header-Binary-Encoding#work-header-binary-format).
+*   [mining API wiki](https://github.com/vootaa/chainweb-node/wiki/Mining-API).
