@@ -5,6 +5,9 @@ tests: True
 package chainweb-mining-client
     tests: True
 
+extra-lib-dirs: /opt/homebrew/opt/openssl@3/lib
+extra-include-dirs: /opt/homebrew/opt/openssl@3/include
+
 allow-newer:
     streaming-events:*
 
